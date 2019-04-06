@@ -49,32 +49,32 @@ maxX = [i for i, j in enumerate(crossCorrelation) if j == maxY]
 
 # Set ticks for x-Axis
 ticks = []
-tickLables = []
+tickLabels = []
 for x in range(len(testSig)):
     if (x / NEW_RATE % INTERVAL == 0):
         ticks.append(x)
-        tickLables.append(x / NEW_RATE)
+        tickLabels.append(x / NEW_RATE)
 
 # Create plots
 plt.subplot(3,1,1)
 plt.subplots_adjust(hspace=0.6)
 plt.title("Cross-Correlation")
-plt.xticks(ticks, tickLables)
+plt.xticks(ticks, tickLabels)
 plt.plot(crossCorrelation)
 
 plt.subplot(3,1,2)
 plt.title("Test Signal")
-plt.xticks(ticks, tickLables)
+plt.xticks(ticks, tickLabels)
 plt.plot(testSig)
 for x in maxX:
     xEnd = x+len(refSig)
-    print("Start: " + str(x / NEW_RATE))
-    print("End: " + str(xEnd / NEW_RATE))
+    print("Start: " + str(x / NEW_RATE) + " (" + str(x * rateTestSig / NEW_RATE) + " samples)")
+    print("End: " + str(xEnd / NEW_RATE) + " (" + str(xEnd * rateTestSig / NEW_RATE) + " samples)")
     plt.axvline(x=x, linestyle="--", color="r")
     plt.axvline(x=xEnd, linestyle="--", color="r")
 
 plt.subplot(3,1,3)
 plt.title("Reference Signal")
-plt.xticks(ticks, tickLables)
+plt.xticks(ticks, tickLabels)
 plt.plot(refSig)
 plt.show()
