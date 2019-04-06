@@ -38,21 +38,19 @@ testEnd = 60 * NEW_RATE # Analyze first 60 seconds
 
 crossCorrelation = np.correlate(song[testStart:testEnd], element)
 
-# crossCorrelation = []
-# for i in tqdm(range(testStart, testEnd - len(element) + 1)): # Sliding correlation
-#     testSamples = song[i:len(element) + i]
-#
-#     res = sum(np.multiply(testSamples, element))
-#     crossCorrelation.append(res)
+# for sample, value in enumerate(crossCorrelation):
+#     crossCorrelation[sample] = [sample / NEW_RATE, value]
 
 m = max(crossCorrelation)
 print([i / NEW_RATE for i, j in enumerate(crossCorrelation) if j == m])
-#
-# crossCorrelation = [float(i)/m for i in crossCorrelation if i >= 0]
+
+ticks = [x for x in range(len(song)) if (x / NEW_RATE) % 15 == 0]
+tickLabels = [x / NEW_RATE for x in ticks]
 
 plt.subplot(3,1,1)
 plt.subplots_adjust(hspace=0.5)
 plt.title("Cross-Correlation")
+plt.xticks(ticks, tickLabels)
 plt.plot(crossCorrelation)
 
 plt.subplot(3,1,2)
