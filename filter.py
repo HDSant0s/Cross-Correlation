@@ -7,16 +7,19 @@ import matplotlib.pyplot as plt
 
 NEW_RATE = 3000
 
-def changeRate(song, oldRate, newRate):
-    duration = song.shape[0] / oldRate
+testStart = 0
+testEnd = 60 * NEW_RATE # Analyze first 60 seconds
 
-    time_old  = np.linspace(0, duration, song.shape[0])
-    time_new  = np.linspace(0, duration, int(song.shape[0] * newRate / oldRate))
+def changeRate(sig, oldRate, newRate):
+    duration = sig.shape[0] / oldRate
 
-    interpolator = interpolate.interp1d(time_old, song.T)
-    song = interpolator(time_new).T
+    time_old  = np.linspace(0, duration, sig.shape[0])
+    time_new  = np.linspace(0, duration, int(sig.shape[0] * newRate / oldRate))
 
-    return song
+    interpolator = interpolate.interp1d(time_old, sig.T)
+    sig = interpolator(time_new).T
+
+    return sig
 
 def normalize(v):
     norm = max(v)
@@ -24,27 +27,21 @@ def normalize(v):
        return v
     return v / norm
 
-rateSong, song = wavfile.read(sys.argv[1]) # Song / longer audio file
-rateElement, element = wavfile.read(sys.argv[2]) # Element to be found in the other file
+rateTestSig, testSig = wavfile.read(sys.argv[1]) # testSig / longer audio file
+rateRefSig, refSig = wavfile.read(sys.argv[2]) # refSig to be found in the other file
 
-song = changeRate(song, rateSong, NEW_RATE)[:, 1]
-element = changeRate(element, rateElement, NEW_RATE)[:, 1]
+testSig = changeRate(testSig, rateTestSig, NEW_RATE)[:, 1]
+refSig = changeRate(refSig, rateRefSig, NEW_RATE)[:, 1]
 
-song = normalize(song)
-element = normalize(element)
+testSig = normalize(testSig)
+refSig = normalize(refSig)
 
-testStart = 0
-testEnd = 60 * NEW_RATE # Analyze first 60 seconds
-
-crossCorrelation = np.correlate(song[testStart:testEnd], element)
-
-# for sample, value in enumerate(crossCorrelation):
-#     crossCorrelation[sample] = [sample / NEW_RATE, value]
+crossCorrelation = np.correlate(testSig[testStart:testEnd], refSig)
 
 m = max(crossCorrelation)
 print([i / NEW_RATE for i, j in enumerate(crossCorrelation) if j == m])
 
-ticks = [x for x in range(len(song)) if (x / NEW_RATE) % 15 == 0]
+ticks = [x for x in range(len(testSig)) if (x / NEW_RATE) % 15 == 0]
 tickLabels = [x / NEW_RATE for x in ticks]
 
 plt.subplot(3,1,1)
@@ -55,9 +52,9 @@ plt.plot(crossCorrelation)
 
 plt.subplot(3,1,2)
 plt.title("Test Signal")
-plt.plot(song[:testEnd])
+plt.plot(testSig[:testEnd])
 
 plt.subplot(3,1,3)
 plt.title("Reference Signal")
-plt.plot(element)
+plt.plot(refSig)
 plt.show()
