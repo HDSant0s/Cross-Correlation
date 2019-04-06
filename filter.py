@@ -6,9 +6,7 @@ from scipy.io import wavfile
 import matplotlib.pyplot as plt
 
 NEW_RATE = 3000
-
-TEST_START = 0
-TEST_END = 60 * NEW_RATE # Analyze first 60 seconds
+INTERVAL = 30
 
 def changeRate(sig, oldRate, newRate):
     duration = sig.shape[0] / oldRate
@@ -27,6 +25,10 @@ def normalize(v):
        return v
     return v / norm
 
+if len(sys.argv) < 3:
+    print("Syntax: testsignal referencesignal")
+    sys.exit()
+
 rateTestSig, testSig = wavfile.read(sys.argv[1]) # Test signal (longer)
 rateRefSig, refSig = wavfile.read(sys.argv[2]) # Reference signal to be found in the other file
 
@@ -39,28 +41,40 @@ testSig = normalize(testSig)
 refSig = normalize(refSig)
 
 # Calculate Cross-Correlation
-crossCorrelation = np.correlate(testSig[TEST_START:TEST_END], refSig)
+crossCorrelation = np.correlate(testSig, refSig)
 
 # Get maximum value and location
-m = max(crossCorrelation)
-print([i / NEW_RATE for i, j in enumerate(crossCorrelation) if j == m])
+maxY = max(crossCorrelation)
+maxX = [i for i, j in enumerate(crossCorrelation) if j == maxY]
 
 # Set ticks for x-Axis
-ticks = [x for x in range(len(testSig)) if (x / NEW_RATE) % 15 == 0]
-tickLabels = [x / NEW_RATE for x in ticks]
+ticks = []
+tickLables = []
+for x in range(len(testSig)):
+    if (x / NEW_RATE % INTERVAL == 0):
+        ticks.append(x)
+        tickLables.append(x / NEW_RATE)
 
 # Create plots
 plt.subplot(3,1,1)
-plt.subplots_adjust(hspace=0.5)
+plt.subplots_adjust(hspace=0.6)
 plt.title("Cross-Correlation")
-plt.xticks(ticks, tickLabels)
+plt.xticks(ticks, tickLables)
 plt.plot(crossCorrelation)
 
 plt.subplot(3,1,2)
 plt.title("Test Signal")
-plt.plot(testSig[:testEnd])
+plt.xticks(ticks, tickLables)
+plt.plot(testSig)
+for x in maxX:
+    xEnd = x+len(refSig)
+    print("Start: " + str(x / NEW_RATE))
+    print("End: " + str(xEnd / NEW_RATE))
+    plt.axvline(x=x, linestyle="--", color="r")
+    plt.axvline(x=xEnd, linestyle="--", color="r")
 
 plt.subplot(3,1,3)
 plt.title("Reference Signal")
+plt.xticks(ticks, tickLables)
 plt.plot(refSig)
 plt.show()
