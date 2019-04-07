@@ -3,6 +3,7 @@ import numpy as np
 from tqdm import tqdm
 from scipy import signal, interpolate
 from scipy.io import wavfile
+from pydub import AudioSegment
 import matplotlib.pyplot as plt
 
 # New bitrate
@@ -29,14 +30,34 @@ def normalize(v):
        return v
     return v / norm
 
+# Reads mp3 and returns the signal (samples) and sample rate
+def readMp3(filename):
+    audio = AudioSegment.from_mp3(filename)
+    audio.export("temp.wav", format='wav')
+
+    signal, rate = wavfile.read("temp.wav")
+    os.remove("temp.wav")
+
+    return signal, rate
+
 # Args: 1. Test signal file, 2. Reference signal
 if len(sys.argv) < 3:
     print("Syntax: testsignal referencesignal")
     sys.exit()
 
-# Read the two files
-rateTestSig, testSig = wavfile.read(sys.argv[1]) # Test signal (longer)
-rateRefSig, refSig = wavfile.read(sys.argv[2]) # Reference signal to be found in the other file
+# Load test signal (longer)
+if sys.argv[1].endswith(".wav"):
+    rateTestSig, testSig = wavfile.read(sys.argv[1])
+elif sys.argv[1].endswith(".mp3"):
+    rateTestSig, testSig = readMp3(sys.argv[1])
+else: print("File format not supported!")
+
+# Load reference signal (known sound, shorter)
+if sys.argv[2].endswith(".wav"):
+    rateRefSig, refSig = wavfile.read(sys.argv[2])
+elif sys.argv[2].endswith(".mp3"):
+    rateRefSig, refSig = readMp3(sys.argv[2])
+else: print("File format not supported!")
 
 # Downsample the signals for quicker analysis
 testSig = changeRate(testSig, rateTestSig, NEW_RATE)[:, 1]
