@@ -1,4 +1,4 @@
-import sys
+import sys, os
 import numpy as np
 from tqdm import tqdm
 from scipy import signal, interpolate
@@ -58,6 +58,8 @@ if sys.argv[2].endswith(".wav"):
 elif sys.argv[2].endswith(".mp3"):
     rateRefSig, refSig = readMp3(sys.argv[2])
 else: print("File format not supported!")
+
+print("Files loaded successfully!")
 
 # Downsample the signals for quicker analysis
 testSig = changeRate(testSig, rateTestSig, NEW_RATE)[:, 1]
