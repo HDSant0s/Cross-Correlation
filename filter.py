@@ -5,9 +5,12 @@ from scipy import signal, interpolate
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
 
+# New bitrate
 NEW_RATE = 3000
+# Tick interval for the plots
 INTERVAL = 30
 
+# Change the sample rates of the audio files
 def changeRate(sig, oldRate, newRate):
     duration = sig.shape[0] / oldRate
 
@@ -19,16 +22,19 @@ def changeRate(sig, oldRate, newRate):
 
     return sig
 
+# Normalize the signals for clearer spike
 def normalize(v):
     norm = max(v)
     if norm == 0:
        return v
     return v / norm
 
+# Args: 1. Test signal file, 2. Reference signal
 if len(sys.argv) < 3:
     print("Syntax: testsignal referencesignal")
     sys.exit()
 
+# Read the two files
 rateTestSig, testSig = wavfile.read(sys.argv[1]) # Test signal (longer)
 rateRefSig, refSig = wavfile.read(sys.argv[2]) # Reference signal to be found in the other file
 
