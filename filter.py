@@ -6,10 +6,9 @@ from scipy.io import wavfile
 from pydub import AudioSegment
 import matplotlib.pyplot as plt
 
-# New bitrate
-NEW_RATE = 16000
 # Tick interval for the plots
 INTERVAL = 30
+RATE = 0
 
 # Change the sample rates of the audio files
 def changeRate(sig, oldRate, newRate):
@@ -61,35 +60,39 @@ else: print("File format not supported!")
 
 print("Files loaded successfully!")
 
-# Downsample the signals for quicker analysis
-testSig = changeRate(testSig, rateTestSig, NEW_RATE)[:, 1]
-refSig = changeRate(refSig, rateRefSig, NEW_RATE)[:, 1]
+# Match sample rates
+if rateRefSig > rateTestSig:
+    refSig = changeRate(refSig, rateRefSig, rateTestSig)
+elif rateTestSig > rateRefSig:
+    testSig = changeRate(testSig, rateTestSig, rateRefSig)
 
-print(rateTestSig, rateRefSig)
+RATE = rateTestSig
+
+# Convert to single channel
+testSig = testSig[:, 0]
+refSig = refSig[:, 0]
 
 # Normalize the signals
 testSig = normalize(testSig)
 refSig = normalize(refSig)
 
+print(len(testSig))
+
 # Calculate Cross-Correlation
-crossCorrelation =  normalize(signal.correlate(testSig, refSig)) # np.correlate(testSig, refSig)
+crossCorrelation =  normalize(signal.correlate(testSig, refSig, mode="valid")) # np.correlate(testSig, refSig)
 
-# Get maximum value and location
-# maxY = max(crossCorrelation)
-# maxX = [i for i, j in enumerate(crossCorrelation) if j == maxY]
-# print(maxX)
+print(len(crossCorrelation))
 
+# Get peaks
 peaks, properties = signal.find_peaks(crossCorrelation, distance=len(refSig), prominence=0.5)
-
-print(peaks, properties)
 
 # Set ticks for x-Axis
 ticks = []
 tickLabels = []
 for x in range(len(testSig)):
-    if (x / NEW_RATE % INTERVAL == 0):
+    if ((x / RATE) % INTERVAL == 0):
         ticks.append(x)
-        tickLabels.append(x / NEW_RATE)
+        tickLabels.append(x / RATE)
 
 # Create plots
 plt.subplot(3,1,1)
@@ -104,8 +107,8 @@ plt.xticks(ticks, tickLabels)
 plt.plot(testSig)
 for x in peaks:
     xEnd = x+len(refSig)
-    print("Start: " + str(x / NEW_RATE) + " (" + str(x * rateTestSig / NEW_RATE) + " samples)")
-    print("End: " + str(xEnd / NEW_RATE) + " (" + str(xEnd * rateTestSig / NEW_RATE) + " samples)")
+    print("Start: " + str(x / RATE) + " (" + str(x) + " samples)")
+    print("End: " + str(xEnd / RATE) + " (" + str(xEnd) + " samples)")
     plt.axvline(x=x, linestyle="--", color="r")
     plt.axvline(x=xEnd, linestyle="--", color="r")
 
