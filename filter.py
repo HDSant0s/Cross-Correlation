@@ -7,7 +7,7 @@ from pydub import AudioSegment
 import matplotlib.pyplot as plt
 
 # New bitrate
-NEW_RATE = 3000
+NEW_RATE = 16000
 # Tick interval for the plots
 INTERVAL = 30
 
@@ -65,16 +65,23 @@ print("Files loaded successfully!")
 testSig = changeRate(testSig, rateTestSig, NEW_RATE)[:, 1]
 refSig = changeRate(refSig, rateRefSig, NEW_RATE)[:, 1]
 
+print(rateTestSig, rateRefSig)
+
 # Normalize the signals
 testSig = normalize(testSig)
 refSig = normalize(refSig)
 
 # Calculate Cross-Correlation
-crossCorrelation = np.correlate(testSig, refSig)
+crossCorrelation =  normalize(signal.correlate(testSig, refSig)) # np.correlate(testSig, refSig)
 
 # Get maximum value and location
-maxY = max(crossCorrelation)
-maxX = [i for i, j in enumerate(crossCorrelation) if j == maxY]
+# maxY = max(crossCorrelation)
+# maxX = [i for i, j in enumerate(crossCorrelation) if j == maxY]
+# print(maxX)
+
+peaks, properties = signal.find_peaks(crossCorrelation, distance=len(refSig), prominence=0.5)
+
+print(peaks, properties)
 
 # Set ticks for x-Axis
 ticks = []
@@ -95,7 +102,7 @@ plt.subplot(3,1,2)
 plt.title("Test Signal")
 plt.xticks(ticks, tickLabels)
 plt.plot(testSig)
-for x in maxX:
+for x in peaks:
     xEnd = x+len(refSig)
     print("Start: " + str(x / NEW_RATE) + " (" + str(x * rateTestSig / NEW_RATE) + " samples)")
     print("End: " + str(xEnd / NEW_RATE) + " (" + str(xEnd * rateTestSig / NEW_RATE) + " samples)")
