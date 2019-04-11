@@ -4,6 +4,7 @@ from tqdm import tqdm
 from scipy import signal, interpolate
 from scipy.io import wavfile
 from pydub import AudioSegment
+from pydub.utils import mediainfo
 import matplotlib.pyplot as plt
 
 # Tick interval for the plots
@@ -32,18 +33,17 @@ def normalize(v):
 # Reads mp3 and returns the signal (samples) and sample rate
 def readMp3(filename):
     audio = AudioSegment.from_mp3(filename)
-    audio.export("temp.wav", format='wav')
+    signal = np.array(audio.get_array_of_samples()[::2])
+    signal = np.expand_dims(signal, 1)
 
-    signal, rate = wavfile.read("temp.wav")
-    os.remove("temp.wav")
+    rate = int(mediainfo(filename)["sample_rate"])
 
-    return signal, rate
+    return rate, signal
 
 # Args: 1. Test signal file, 2. Reference signal
 if len(sys.argv) < 3:
     print("Syntax: testsignal referencesignal")
     sys.exit()
-
 # Load test signal (longer)
 if sys.argv[1].endswith(".wav"):
     rateTestSig, testSig = wavfile.read(sys.argv[1])
@@ -69,22 +69,20 @@ elif rateTestSig > rateRefSig:
 RATE = rateTestSig
 
 # Convert to single channel
-testSig = testSig[:, 0]
-refSig = refSig[:, 0]
+if testSig.shape[1] >= 1:
+    testSig = testSig[:, 0]
+if refSig.shape[1] >= 1:
+    refSig = refSig[:, 0]
 
 # Normalize the signals
 testSig = normalize(testSig)
 refSig = normalize(refSig)
 
-print(len(testSig))
-
 # Calculate Cross-Correlation
 crossCorrelation =  normalize(signal.correlate(testSig, refSig, mode="valid")) # np.correlate(testSig, refSig)
 
-print(len(crossCorrelation))
-
 # Get peaks
-peaks, properties = signal.find_peaks(crossCorrelation, distance=len(refSig), prominence=0.5)
+peaks, properties = signal.find_peaks(crossCorrelation, distance=len(refSig), prominence=0.5, wlen=50)
 
 # Set ticks for x-Axis
 ticks = []
